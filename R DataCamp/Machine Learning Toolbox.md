@@ -653,3 +653,105 @@ RMSE was used to select the optimal model using  the smallest value.
 The final value used for the model was mtry = 7.
 ```
 
+Advantage of glmnet
+===
+
+What's the advantage of `glmnet` over regular `glm` models?
+
+**models place constraints on your coefficients, which helps prevent overfitting.**
+
+Make a custom trainControl
+===
+
+The wine quality dataset was a regression problem, but now you are looking at a classification problem. This is a simulated dataset based on the "don't overfit" competition on Kaggle a number of years ago.
+
+Classification problems are a little more complicated than regression problems because you have to provide a custom `summaryFunction` to the `train()` function to use the `AUC` metric to rank your models. Start by making a custom `trainControl`, as you did in the previous chapter. Be sure to set `classProbs = TRUE`, otherwise the `twoClassSummary` for `summaryFunction` will break.
+
+```R
+# Create custom trainControl: myControl
+myControl <- trainControl(
+  method = "cv", number = 10,
+  summaryFunction = twoClassSummary,
+  classProbs = TRUE, # IMPORTANT!
+  verboseIter = TRUE
+)
+```
+
+Fit glmnet with custom trainControl
+===
+
+Now that you have a custom `trainControl` object, fit a `glmnet`model to the "don't overfit" dataset. Recall from the video that `glmnet` is an extention of the generalized linear regression model (or `glm`) that places constraints on the magnitude of the coefficients to prevent overfitting. This is more commonly known as "penalized" regression modeling and is a very useful technique on datasets with many predictors and few values.
+
+`glmnet` is capable of fitting two different kinds of penalized models, controlled by the `alpha` parameter:
+
+- Ridge regression (or `alpha = 0`)
+- Lasso regression (or `alpha = 1`)
+
+You'll now fit a `glmnet` model to the "don't overfit" dataset using the defaults provided by the `caret` package.
+
+```R
+# Fit glmnet model: model
+model <- train(
+  y ~ ., overfit,
+  method = "glmnet",
+  trControl = myControl
+)
+
+# Print model to console
+model
+glmnet 
+
+250 samples
+200 predictors
+  2 classes: 'class1', 'class2' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold) 
+Summary of sample sizes: 224, 225, 225, 225, 226, 225, ... 
+Resampling results across tuning parameters:
+
+  alpha  lambda        ROC        Sens  Spec     
+  0.10   0.0001012745  0.3757246  0.00  0.9568841
+  0.10   0.0010127448  0.3822464  0.00  0.9740942
+  0.10   0.0101274483  0.3798913  0.00  0.9869565
+  0.55   0.0001012745  0.3331522  0.00  0.9351449
+  0.55   0.0010127448  0.3288949  0.00  0.9436594
+  0.55   0.0101274483  0.3326993  0.00  0.9695652
+  1.00   0.0001012745  0.2903080  0.05  0.9351449
+  1.00   0.0010127448  0.2770833  0.05  0.9393116
+  1.00   0.0101274483  0.3253623  0.00  0.9826087
+
+ROC was used to select the optimal model using  the largest value.
+The final values used for the model were alpha = 0.1 and lambda = 0.001012745.
+
+# Print maximum ROC statistic
+max(model[["results"]][["ROC"]])
+[1] 0.3822464
+```
+
+
+
+
+
+```
+# The top 20 most common bigrams
+top_20_bigram <- bb_bigram_count$bigram[1:20]
+
+# Creating a faceted plot comparing guitar- and piano-driven songs for bigram frequency
+bb_tagged %>%   
+    mutate(next_chord = lead(chord),
+    next_title = lead(title),
+    bigram = paste(chord, next_chord, sep = " ")) %>%
+    filter(title == next_title) %>%
+    group_by(bigram) %>%
+    filter(bigram %in% top_20_bigram) %>%
+    count(bigram,instrument) %>%
+    ggplot(aes(x = bigram, y = n, fill = bigram)) +
+    geom_bar(stat="identity") +
+    coord_flip() +
+    xlab("Chord Changes") +
+    ylab("Count") +
+    facet_wrap(~ instrument) + 
+    theme(legend.position = 'none')
+```
+
